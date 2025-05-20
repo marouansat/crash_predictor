@@ -1,0 +1,16 @@
+Dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+COPY . /app
+
+RUN pip install --upgrade pip
+RUN pip install flask tensorflow numpy
+
+EXPOSE 8080
+
+ENV FLASK_APP=crash_game_app.py
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_ENV=production
+
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]

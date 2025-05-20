@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8" />
+    <title>توقع لون الجولة التالية</title>
+    <style>
+        body {
+            background-color: #121212;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: rtl;
+            margin: 20px auto;
+            max-width: 700px;
+            color: #ddd;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #eee;
+        }
+        .colors-list {
+            margin-top: 20px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 15px #000000aa;
+            max-height: 400px;        /* ارتفاع ثابت */
+            overflow-y: auto;         /* تفعيل التمرير الرأسي */
+        }
+        .color-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #333;
+            align-items: center;
+        }
+        .color-name {
+            font-weight: bold;
+            text-transform: capitalize;
+            font-size: 1.1em;
+        }
+        .color-red { color: #ff6b6b; }
+        .color-blue { color: #4d94ff; }
+        .color-green { color: #4cd137; }
+        .color-yellow { color: #fbc531; }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background-color 0.3s, color 0.3s;
+            margin-left: 8px;
+            color: #fff;
+        }
+        .btn-delete {
+            background-color: #e84118;
+        }
+        .btn-delete:hover {
+            background-color: #c23616;
+        }
+        .btn-edit {
+            background-color: #0097e6;
+        }
+        .btn-edit:hover {
+            background-color: #0652dd;
+        }
+        form.inline {
+            display: inline;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #888;
+        }
+        .prediction {
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 25px;
+            font-weight: bold;
+            color: #00cec9;
+        }
+
+        /* دوائر اختيار الألوان */
+        .color-picker {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .color-circle {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            margin: 0 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .color-circle.red { background-color: #ff6b6b; }
+        .color-circle.blue { background-color: #4d94ff; }
+        .color-circle.green { background-color: #4cd137; }
+        .color-circle.yellow { background-color: #fbc531; }
+        .color-circle:hover {
+            border-color: #00cec9;
+        }
+    </style>
+</head>
+<body>
+    <h1>توقع لون الجولة التالية</h1>
+    <h2>عدد الجولات المدخلة: {{ total }}</h2>
+    <h2>الجولة الحالية (1-18): {{ round_counter }}</h2>
+
+    <div class="colors-list">
+        <h3>الألوان المدخلة:</h3>
+        {% for idx, color in enumerate(colors) %}
+        <div class="color-item">
+            <span class="color-name color-{{color}}">{{ color }}</span>
+            <div>
+                <form action="{{ url_for('delete_color', index=idx) }}" method="get" class="inline" onsubmit="return confirm('هل تريد حذف هذا اللون؟');">
+                    <button type="submit" class="btn-delete">حذف</button>
+                </form>
+
+                <button class="btn-edit" onclick="showEditForm({{ idx }}, '{{ color }}')">تعديل</button>
+            </div>
+        </div>
+        <div id="edit-form-{{ idx }}" style="display:none; margin: 8px 0;">
+            <form action="{{ url_for('edit_color', index=idx) }}" method="post" class="inline">
+                <select name="new_color" required>
+                    {% for c in color_options %}
+                    <option value="{{ c }}" {% if c == color %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn-edit">حفظ</button>
+                <button type="button" onclick="hideEditForm({{ idx }})">إلغاء</button>
+            </form>
+        </div>
+        {% endfor %}
+
+        {% if colors|length == 0 %}
+        <p style="text-align:center; margin: 15px 0; color: #aaa;">لا توجد ألوان مدخلة حتى الآن.</p>
+        {% endif %}
+    </div>
+
+    <div class="color-picker">
+        <form action="{{ url_for('add_color') }}" method="post" id="addColorForm">
+            <input type="hidden" name="color" id="selectedColorInput" required>
+            <div class="color-circle red" onclick="submitColor('red')"></div>
+            <div class="color-circle blue" onclick="submitColor('blue')"></div>
+            <div class="color-circle green" onclick="submitColor('green')"></div>
+            <div class="color-circle yellow" onclick="submitColor('yellow')"></div>
+        </form>
+    </div>
+
+    <div class="prediction">
+        {% if prediction %}
+        اللون المتوقع للجولة التالية: <span class="color-name color-{{ prediction }}">{{ prediction }}</span>
+        {% else %}
+        نحتاج إلى {{ 18 - total }} جولة إضافية على الأقل للتوقع.
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        <small>تم تطوير التطبيق باستخدام Flask و TensorFlow</small>
+    </div>
+
+<script>
+    function showEditForm(idx, currentColor) {
+        document.getElementById('edit-form-' + idx).style.display = 'block';
+    }
+    function hideEditForm(idx) {
+        document.getElementById('edit-form-' + idx).style.display = 'none';
+    }
+
+    function submitColor(color) {
+        document.getElementById('selectedColorInput').value = color;
+        document.getElementById('addColorForm').submit();
+    }
+</script>
+</body>
+</html>

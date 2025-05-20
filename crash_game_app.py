@@ -109,7 +109,7 @@ def index():
                            colors=data,
                            prediction=prediction,
                            total=len(data),
-                           enumerate=enumerate,  # تمرير enumerate للقالب
+                           enumerate=enumerate,
                            color_options=COLOR_LIST)
 
 @app.route('/add', methods=['POST'])
@@ -119,7 +119,7 @@ def add_color():
     if color in COLOR_LIST:
         data.append(color)
         save_data(data)
-        train_model()  # إعادة تدريب النموذج بعد كل إضافة
+        train_model()
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:index>')
@@ -142,4 +142,5 @@ def edit_color(index):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=True)

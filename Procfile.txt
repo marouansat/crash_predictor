@@ -1,1 +1,1 @@
-web: python crash_game_app.py
+web: gunicorn --bind 0.0.0.0:8080 crash_game_app:app
